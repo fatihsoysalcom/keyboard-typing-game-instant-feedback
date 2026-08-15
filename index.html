@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Typing Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        #target-word {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            min-height: 1.2em; /* Prevent layout shift */
+        }
+        #target-word span {
+            display: inline-block;
+            padding: 2px 0;
+            border-bottom: 2px solid transparent;
+            transition: background-color 0.1s ease-out, color 0.1s ease-out;
+        }
+        #target-word span.current {
+            background-color: #e0f7fa;
+            border-bottom-color: #00bcd4;
+            color: #00796b;
+        }
+        #target-word span.correct {
+            color: #28a745;
+        }
+        #target-word span.incorrect {
+            color: #dc3545;
+            background-color: #ffe0e0;
+        }
+        #typing-input {
+            width: 80px; /* Small input for single character */
+            padding: 12px 15px;
+            font-size: 1.8em;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-transform: uppercase; /* Match target word case */
+        }
+        #typing-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        #status-message {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            min-height: 1.5em; /* Prevent layout shift */
+            color: #555;
+        }
+        #reset-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #reset-button:hover {
+            background-color: #0056b3;
+        }
+        #reset-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Type the Word</h1>
+        <p id="target-word"></p>
+        <input type="text" id="typing-input" maxlength="1" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <p id="status-message"></p>
+        <button id="reset-button">Reset Game</button>
+    </div>
+
+    <script>
+        const targetWordElement = document.getElementById('target-word');
+        const typingInput = document.getElementById('typing-input');
+        const statusMessage = document.getElementById('status-message');
+        const resetButton = document.getElementById('reset-button');
+
+        // Turkish words related to the article's topic
+        const words = ["KLAVYE", "ETKILEŞIM", "GERIBILDIRIM", "DENEYIM", "PERFORMANS"]; 
+        let currentTargetWord = '';
+        let currentIndex = 0;
+        let gameActive = false;
+
+        function initializeGame() {
+            // Pick a random word from the list
+            currentTargetWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
+            currentIndex = 0;
+            gameActive = true;
+            typingInput.value = '';
+            typingInput.disabled = false;
+            typingInput.focus();
+            statusMessage.textContent = 'Start typing!';
+            resetButton.disabled = true; // Disable reset until game is over or user gives up
+
+            renderTargetWord();
+        }
+
+        function renderTargetWord() {
+            targetWordElement.innerHTML = '';
+            currentTargetWord.split('').forEach((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                if (index === currentIndex) {
+                    span.classList.add('current'); // Highlight the character to be typed next
+                }
+                targetWordElement.appendChild(span);
+            });
+        }
+
+        function handleTyping(event) {
+            if (!gameActive) return;
+
+            const typedChar = typingInput.value.toUpperCase(); // Get the single typed character
+            typingInput.value = ''; // Clear input immediately for next character
+            typingInput.focus(); // Keep focus for continuous typing
+
+            if (!typedChar) return; // Ignore empty input (e.g., if user just pressed enter)
+
+            const expectedChar = currentTargetWord[currentIndex];
+            const currentSpan = targetWordElement.children[currentIndex];
+
+            // --- Article Concept: Instant Feedback & Error Management --- 
+            // This section demonstrates immediate visual feedback for user input, 
+            // a core principle from keyboard games for better web interactions.
+            if (typedChar === expectedChar) {
+                currentSpan.classList.remove('current', 'incorrect');
+                currentSpan.classList.add('correct'); // Visual feedback: correct character
+                statusMessage.textContent = 'Correct!';
+                currentIndex++;
+
+                if (currentIndex === currentTargetWord.length) {
+                    statusMessage.textContent = `You completed the word "${currentTargetWord}"!`;
+                    gameActive = false;
+                    typingInput.disabled = true;
+                    resetButton.disabled = false;
+                } else {
+                    // Update the 'current' highlight for the next character
+                    targetWordElement.children[currentIndex].classList.add('current');
+                }
+            } else {
+                currentSpan.classList.remove('current', 'correct');
+                currentSpan.classList.add('incorrect'); // Visual feedback: incorrect character
+                statusMessage.textContent = `Wrong! Try '${expectedChar}'`;
+                // currentIndex does not advance, user must re-type the correct character
+            }
+            // --- End Article Concept ---
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', initializeGame);
+        typingInput.addEventListener('input', handleTyping); // 'input' event fires when value changes
+        resetButton.addEventListener('click', initializeGame);
+    </script>
+</body>
+</html>
